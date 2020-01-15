@@ -1,11 +1,19 @@
+var WIDTH = 800;
+var HEIGHT = 600;
+
+var world = {
+  width: WIDTH * 5,
+  height: HEIGHT
+};
+
 var config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: WIDTH,
+    height: HEIGHT,
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 600 },
+            gravity: { y: 1000 },
             debug: false
         }
     },
@@ -19,6 +27,10 @@ var config = {
 var game = new Phaser.Game(config);
 
 var platforms;
+var jump = true;
+
+var start = 1000;
+var vission = this.cameras.main.worldView.x;
 
 function preload() {
     this.load.image('sky', 'assets/img/sky.png');
@@ -27,30 +39,65 @@ function preload() {
 }
 
 function create() {
-    this.add.image(0, 0, 'sky').setOrigin(0, 0);
+    this.scene.scene.physics.world.setBounds(0, 0, world.width, world.height)
 
-    platforms = this.physics.add.staticGroup();
+    sky = this.add.image(0, 0, 'sky').setOrigin(0, 0);
 
-    platforms.create(600, 400, 'platform');
+    // Platforms
+    platforms = this.physics.add.staticGroup().setOrigin(0, 0);
 
-    player = this.physics.add.sprite(100, 450, 'sheep');
+    // Pipes
+    pipes = [
+        [1000, 0],
+        [1000, 500],
+        [1500, 700],
+        [1500, 200],
+        [2000, 600],
+        [2000, 100],
+    ]
 
+    pipes.forEach(pipe => {
+        platforms.create(pipe[0], pipe[1], 'platform');
+    });
+
+    console.log(Phaser.Math.Between(100, 200));
+
+    
+    
+    // Player
+    player = this.physics.add.sprite(100, 200, 'sheep');
+    
     player.setBounce(0.2);
     player.setScale(.5);
     player.setCollideWorldBounds(true);
 
     this.physics.add.collider(player, platforms);
-
+    
     textFps = this.add.text(16, 16, 'Fps: ' + game.loop.actualFps, { fontSize: '16px', fill: '#000' });
+
     cursors = this.input.keyboard.createCursorKeys();
+
+    // Camera
+    this.cameras.main.startFollow(player);
+    this.cameras.main.setBounds(0, 0, world.width, world.height);
+
 }
 
-function update() {
-    textFps.setText('Fps: ' + game.loop.actualFps);
 
+function update() {
+    // console.log(start, vission);
+
+    sky.x = this.cameras.main.worldView.x;
+    player.setVelocityX(200);
+
+    textFps.setText('Fps: ' + game.loop.actualFps);
     if (cursors.up.isDown) {
-        player.setVelocityY(-300);
-        player.setVelocityX(160);
+        if (jump) {
+            player.setVelocityY(-400);
+            jump = false;
+        }
+    } else {
+        jump = true;
     }
 
     if (player.body.newVelocity.y > 1) {
