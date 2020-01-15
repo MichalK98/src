@@ -5,7 +5,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 300 },
+            gravity: { y: 600 },
             debug: false
         }
     },
@@ -17,24 +17,47 @@ var config = {
 }
 
 var game = new Phaser.Game(config);
-var text;
+
+var platforms;
 
 function preload() {
     this.load.image('sky', 'assets/img/sky.png');
     this.load.image('sheep', 'assets/img/sheep.png');
+    this.load.image('platform', 'assets/img/platform.png');
 }
 
 function create() {
     this.add.image(0, 0, 'sky').setOrigin(0, 0);
 
-    var player = this.physics.add.image(0, 0, 'sheep');
+    platforms = this.physics.add.staticGroup();
+
+    platforms.create(600, 400, 'platform');
+
+    player = this.physics.add.sprite(100, 450, 'sheep');
+
+    player.setBounce(0.2);
     player.setScale(.5);
-    player.setBounce(.2);
     player.setCollideWorldBounds(true);
 
-    scoreText = this.add.text(16, 16, 'fps', { fontSize: '32px', fill: '#000' });
+    this.physics.add.collider(player, platforms);
+
+    textFps = this.add.text(16, 16, 'Fps: ' + game.loop.actualFps, { fontSize: '16px', fill: '#000' });
+    cursors = this.input.keyboard.createCursorKeys();
 }
 
 function update() {
-    scoreText.setText('Fps: ' + game.loop.actualFps);
+    textFps.setText('Fps: ' + game.loop.actualFps);
+
+    if (cursors.up.isDown) {
+        player.setVelocityY(-300);
+        player.setVelocityX(160);
+    }
+
+    if (player.body.newVelocity.y > 1) {
+        player.body.rotation = 10;
+    } else if (player.body.newVelocity.y < -1) {
+        player.body.rotation = -10;
+    } else {
+        player.body.rotation = 0;
+    }
 }
