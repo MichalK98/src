@@ -20,8 +20,7 @@ var config = {
     scene: {
         preload: preload,
         create: create,
-        update: update,
-        render: render
+        update: update
     }
 }
 
@@ -30,7 +29,19 @@ var game = new Phaser.Game(config);
 var platforms;
 var jump = true;
 
-var start = 1000;;
+// Pipe
+var pipes = [];
+
+var pipeMin = -250;
+var pipeMax = 150;
+var pipeGap = 700;
+
+var pipeRandom;
+var pipeNumberNew;
+var pipeNumberOld = 0;
+
+// Camera
+var cameraPosition;
 
 function preload() {
     this.load.image('background', 'assets/img/sky.png');
@@ -39,29 +50,15 @@ function preload() {
 }
 
 function create() {
-    //
+    // Background
     background = this.add.image(0, 0, 'background').setOrigin(0, 0);
 
     // Platforms
     platforms = this.physics.add.staticGroup().setOrigin(0, 0);
 
-    // Pipes
-    pipes = [
-        [1000, 0],
-        [1000, 500],
-        [1500, 700],
-        [1500, 200],
-        [2000, 600],
-        [2000, 100],
-    ]
-
-    pipes.forEach(pipe => {
-        platforms.create(pipe[0], pipe[1], 'platform');
-    });
-
     // Player
     player = this.physics.add.sprite(100, 200, 'sheep');
-    
+
     player.setBounce(0.2);
     player.setScale(.5);
     player.setCollideWorldBounds(true);
@@ -75,19 +72,39 @@ function create() {
 
     this.scene.scene.physics.world.setBounds(0, 0, world.width, world.height)
 
-    textFps = this.add.text(16, 16, 'Fps: ' + game.loop.actualFps, { fontSize: '16px', fill: '#000' });
     cursors = this.input.keyboard.createCursorKeys();
 }
 
 function update() {
+    cameraPosition = this.cameras.main.worldView.x;
+    pipeNumberNew = Math.floor(cameraPosition / 500);
+
+    if (pipeNumberNew > pipeNumberOld) {
+        // Randomize a new pipe location
+        pipeRandom = Phaser.Math.Between(pipeMin, pipeMax);
+        // Add to pipe array
+        pipes.push(
+            [Math.floor(cameraPosition + 1000), pipeRandom],
+            [Math.floor(cameraPosition + 1000), pipeRandom + pipeGap]
+        );
+
+       // Draw pipes from arrayklak
+        pipes.forEach(pipe => {
+            platforms.create(pipe[0], pipe[1], 'platform');
+        });
+        // Set old pipe to new
+        pipeNumberOld = pipeNumberNew;
+    }
+
     // Move background image to camera view
-    background.x = this.cameras.main.worldView.x;
+    background.x = cameraPosition;
     
     // Move player automaticly
     player.setVelocityX(200);
     
-    // Jump onlick
+    // Prevent spam jump
     if (cursors.up.isDown) {
+        // Jump
         if (jump) {
             player.setVelocityY(-400);
             jump = false;
@@ -104,11 +121,4 @@ function update() {
     } else {
         player.body.rotation = 0;
     }
-
-    // FPS
-}
-
-function render() {
-    textFps.setText('Fps: ' + game.loop.actualFps);
-
 }
