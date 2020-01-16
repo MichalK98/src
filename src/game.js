@@ -20,7 +20,8 @@ var config = {
     scene: {
         preload: preload,
         create: create,
-        update: update
+        update: update,
+        render: render
     }
 }
 
@@ -29,19 +30,17 @@ var game = new Phaser.Game(config);
 var platforms;
 var jump = true;
 
-var start = 1000;
-var vission = this.cameras.main.worldView.x;
+var start = 1000;;
 
 function preload() {
-    this.load.image('sky', 'assets/img/sky.png');
+    this.load.image('background', 'assets/img/sky.png');
     this.load.image('sheep', 'assets/img/sheep.png');
     this.load.image('platform', 'assets/img/platform.png');
 }
 
 function create() {
-    this.scene.scene.physics.world.setBounds(0, 0, world.width, world.height)
-
-    sky = this.add.image(0, 0, 'sky').setOrigin(0, 0);
+    //
+    background = this.add.image(0, 0, 'background').setOrigin(0, 0);
 
     // Platforms
     platforms = this.physics.add.staticGroup().setOrigin(0, 0);
@@ -60,10 +59,6 @@ function create() {
         platforms.create(pipe[0], pipe[1], 'platform');
     });
 
-    console.log(Phaser.Math.Between(100, 200));
-
-    
-    
     // Player
     player = this.physics.add.sprite(100, 200, 'sheep');
     
@@ -71,26 +66,27 @@ function create() {
     player.setScale(.5);
     player.setCollideWorldBounds(true);
 
+    // Colliders
     this.physics.add.collider(player, platforms);
-    
-    textFps = this.add.text(16, 16, 'Fps: ' + game.loop.actualFps, { fontSize: '16px', fill: '#000' });
-
-    cursors = this.input.keyboard.createCursorKeys();
 
     // Camera
     this.cameras.main.startFollow(player);
     this.cameras.main.setBounds(0, 0, world.width, world.height);
 
+    this.scene.scene.physics.world.setBounds(0, 0, world.width, world.height)
+
+    textFps = this.add.text(16, 16, 'Fps: ' + game.loop.actualFps, { fontSize: '16px', fill: '#000' });
+    cursors = this.input.keyboard.createCursorKeys();
 }
 
-
 function update() {
-    // console.log(start, vission);
-
-    sky.x = this.cameras.main.worldView.x;
+    // Move background image to camera view
+    background.x = this.cameras.main.worldView.x;
+    
+    // Move player automaticly
     player.setVelocityX(200);
-
-    textFps.setText('Fps: ' + game.loop.actualFps);
+    
+    // Jump onlick
     if (cursors.up.isDown) {
         if (jump) {
             player.setVelocityY(-400);
@@ -100,6 +96,7 @@ function update() {
         jump = true;
     }
 
+    // Player rotaion
     if (player.body.newVelocity.y > 1) {
         player.body.rotation = 10;
     } else if (player.body.newVelocity.y < -1) {
@@ -107,4 +104,11 @@ function update() {
     } else {
         player.body.rotation = 0;
     }
+
+    // FPS
+}
+
+function render() {
+    textFps.setText('Fps: ' + game.loop.actualFps);
+
 }
