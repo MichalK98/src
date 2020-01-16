@@ -52,23 +52,42 @@ var cameraPosition;
 function preload() {
     // Load game assets
     this.load.image('background', 'assets/img/sky.png');
-    this.load.image('sheep', 'assets/img/sheep.png');
+    this.load.image('title', 'assets/img/title.png');
     this.load.image('platform', 'assets/img/platform.png');
+    this.load.image('sheep', 'assets/img/sheep.png');
+    this.load.spritesheet(
+        'sheep-slide',
+        'assets/img/sheep-slide.png',
+        {frameWidth: 100, frameHeight: 84}
+    );
 }
 
 function create() {
     // Background
     background = this.add.image(-100, 0, 'background').setOrigin(0, 0);
+    this.add.image(0, 0, 'title').setOrigin(0, 0);
 
     // Platforms
     platforms = this.physics.add.staticGroup().setOrigin(0, 0);
 
     // Player
-    player = this.physics.add.sprite(100, 200, 'sheep');
+    player = this.physics.add.sprite(100, 580, 'sheep');
     // Player settings
     player.setBounce(0.2);
     player.setScale(.5);
     player.setCollideWorldBounds(true);
+    // Player animations
+    this.anims.create({
+        key: 'sheep-slide',
+        frames: this.anims.generateFrameNumbers('sheep-slide', { start: 0, end: 4 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'sheep-turn',
+        frames: this.anims.generateFrameNumbers('sheep-slide', { start: 0, end: 0 }),
+        frameRate: 10,
+    });
 
     // Colliders
     this.physics.add.collider(player, platforms);
@@ -83,7 +102,6 @@ function create() {
 }
 
 function update() {
-
     // Get the camera position
     cameraPosition = this.cameras.main.worldView.x;
     // Move background image to camera view
@@ -91,7 +109,7 @@ function update() {
 
     // Get the number of pipes 
     pipeNumberNew = Math.floor(cameraPosition / 500);
-// 
+    
     // Chceck if need more pipes
     if (pipeNumberNew > pipeNumberOld) {
         
@@ -118,20 +136,17 @@ function update() {
     }
 
     // Player
-    // Move player automaticly
-    player.setVelocityX(200);
-
     // Prevent spam jump
     if (cursors.up.isDown) {
         // Jump
         if (jump) {
+            player.setVelocityX(200);
             player.setVelocityY(-400);
             jump = false;
         }
     } else {
         jump = true;
     }
-
     // Player rotaion
     if (player.body.newVelocity.y > 1) {
         player.body.rotation = 10;
@@ -139,5 +154,15 @@ function update() {
         player.body.rotation = -10;
     } else {
         player.body.rotation = 0;
+    }
+    // Blood animations
+    if (player.body.speed >= 100) {
+        if (player.body.touching.down || player.body.y >= 508) {
+            player.anims.play('sheep-slide', true);
+        } else {
+            player.anims.play('sheep-turn');
+        }
+    } else {
+        player.anims.play('sheep-turn');
     }
 }
